@@ -1,5 +1,5 @@
 import { Router } from "express";
-import SpecialtyController from "./specialty.controller";
+import { SpecialtyController } from "./specialty.controller";
 
 const router: Router = Router();
 
@@ -8,5 +8,4 @@ router.get("/", SpecialtyController.getAllSpecialties);
 router.patch("/:id", SpecialtyController.updateSpecialty);
 router.delete("/:id", SpecialtyController.deleteSpecialty);
 
-const SpecialtyRoutes = router;
-export default SpecialtyRoutes;
+export const SpecialtyRoutes = router;

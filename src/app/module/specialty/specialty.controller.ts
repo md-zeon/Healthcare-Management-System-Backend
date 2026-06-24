@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import SpecialtyService from "./specialty.service";
+import { SpecialtyService } from "./specialty.service";
 import catchAsync from "../../shared/catchAsync";
 import sendResponse from "../../shared/sendResponse";
 import status from "http-status";
@@ -57,11 +57,9 @@ const deleteSpecialty = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const SpecialtyController = {
+export const SpecialtyController = {
   createSpecialty,
   getAllSpecialties,
   updateSpecialty,
   deleteSpecialty,
 };
-
-export default SpecialtyController;

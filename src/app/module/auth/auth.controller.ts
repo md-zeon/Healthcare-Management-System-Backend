@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import catchAsync from "../../shared/catchAsync";
-import AuthService from "./auth.service";
+import { AuthService } from "./auth.service";
 import sendResponse from "../../shared/sendResponse";
 import status from "http-status";
 
@@ -29,8 +29,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const AuthController = {
+export const AuthController = {
   registerPatient,
   loginUser,
 };
-export default AuthController;

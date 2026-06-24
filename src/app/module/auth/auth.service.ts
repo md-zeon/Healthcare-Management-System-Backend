@@ -78,8 +78,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
   return data;
 };
 
-const AuthService = {
+export const AuthService = {
   registerPatient,
   loginUser,
 };
-export default AuthService;
