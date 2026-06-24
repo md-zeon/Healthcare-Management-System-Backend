@@ -1,6 +1,6 @@
 import { UserStatus } from "../../../generated/prisma/enums";
 import { auth } from "../../lib/auth";
-// import { prisma } from "../../lib/prisma";
+import { prisma } from "../../lib/prisma";
 
 interface IRegisterPatientPayload {
   name: string;
@@ -22,12 +22,34 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
   if (!data.user) {
     throw new Error("Failed to register patient");
   }
+  try {
+    const patient = await prisma.$transaction(async (tx) => {
+      const patientTx = await tx.patient.create({
+        data: {
+          userId: data.user.id,
+          name,
+          email,
+        },
+      });
+      return patientTx;
+    });
 
-  // TODO: Create patient Profile in transaction after signup is successful in user model
-  //   const patient = await prisma.$transaction(async (tx) => {});
+    return {
+      ...data,
+      patient,
+    };
+  } catch (error) {
+    console.log("Transaction error:", error);
 
-  //   TODO: return the patient profile along with the user data after successful registration
-  return data;
+    // If the transaction fails, delete the user that was created in better-auth to avoid orphaned users in the database
+    await prisma.user.delete({
+      where: {
+        id: data.user.id,
+      },
+    });
+
+    throw new Error("Failed to register patient", { cause: error });
+  }
 };
 
 interface ILoginUserPayload {
@@ -52,7 +74,6 @@ const loginUser = async (payload: ILoginUserPayload) => {
   if (data.user.status === UserStatus.DELETED) {
     throw new Error("Your account has been deleted. Please contact support.");
   }
-  
 
   return data;
 };
