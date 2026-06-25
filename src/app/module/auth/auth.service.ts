@@ -4,6 +4,7 @@ import AppError from "../../errorHelpers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface";
+import { tokenUtils } from "../../utils/token";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
   const { name, email, password } = payload;
@@ -31,8 +32,23 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
       return patientTx;
     });
 
+    const tokenPayload = {
+      userId: data.user.id,
+      role: data.user.role,
+      name: data.user.name,
+      email: data.user.email,
+      status: data.user.status,
+      isDeleted: data.user.isDeleted,
+      emailVerified: data.user.emailVerified,
+    };
+
+    const accessToken = tokenUtils.getAccessToken(tokenPayload);
+    const refreshToken = tokenUtils.getRefreshToken(tokenPayload);
+
     return {
       ...data,
+      accessToken,
+      refreshToken,
       patient,
     };
   } catch (error) {
@@ -73,7 +89,24 @@ const loginUser = async (payload: ILoginUserPayload) => {
     );
   }
 
-  return data;
+  const tokenPayload = {
+    userId: data.user.id,
+    role: data.user.role,
+    name: data.user.name,
+    email: data.user.email,
+    status: data.user.status,
+    isDeleted: data.user.isDeleted,
+    emailVerified: data.user.emailVerified,
+  };
+
+  const accessToken = tokenUtils.getAccessToken(tokenPayload);
+  const refreshToken = tokenUtils.getRefreshToken(tokenPayload);
+
+  return {
+    ...data,
+    accessToken,
+    refreshToken,
+  };
 };
 
 export const AuthService = {
