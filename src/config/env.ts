@@ -1,4 +1,6 @@
 import dotenv from "dotenv";
+import AppError from "../app/errorHelpers/AppError";
+import status from "http-status";
 
 dotenv.config();
 
@@ -20,7 +22,8 @@ const loadEnvVariables = (): EnvConfig => {
   ];
   for (const variable of requiredEnvVariables) {
     if (!process.env[variable]) {
-      throw new Error(
+      throw new AppError(
+        status.INTERNAL_SERVER_ERROR,
         `Environment variable ${variable} is required but not defined in .env file`,
       );
     }

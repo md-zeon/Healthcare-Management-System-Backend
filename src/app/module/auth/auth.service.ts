@@ -1,12 +1,9 @@
+import status from "http-status";
 import { UserStatus } from "../../../generated/prisma/enums";
+import AppError from "../../errorHelpers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
-
-interface IRegisterPatientPayload {
-  name: string;
-  email: string;
-  password: string;
-}
+import { ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
   const { name, email, password } = payload;
@@ -20,7 +17,7 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
   });
 
   if (!data.user) {
-    throw new Error("Failed to register patient");
+    throw new AppError(status.BAD_REQUEST, "Failed to register patient");
   }
   try {
     const patient = await prisma.$transaction(async (tx) => {
@@ -48,14 +45,9 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
       },
     });
 
-    throw new Error("Failed to register patient", { cause: error });
+    throw new AppError(status.BAD_REQUEST, "Failed to register patient");
   }
 };
-
-interface ILoginUserPayload {
-  email: string;
-  password: string;
-}
 
 const loginUser = async (payload: ILoginUserPayload) => {
   const { email, password } = payload;
@@ -68,11 +60,17 @@ const loginUser = async (payload: ILoginUserPayload) => {
   });
 
   if (data.user.status === UserStatus.BLOCKED) {
-    throw new Error("Your account has been blocked. Please contact support.");
+    throw new AppError(
+      status.FORBIDDEN,
+      "Your account has been blocked. Please contact support.",
+    );
   }
 
   if (data.user.status === UserStatus.DELETED) {
-    throw new Error("Your account has been deleted. Please contact support.");
+    throw new AppError(
+      status.GONE,
+      "Your account has been deleted. Please contact support.",
+    );
   }
 
   return data;
