@@ -3,6 +3,7 @@ import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
 import { IUpdateSuperAdminPayload } from "./superAdmin.interface";
 import { UserStatus } from "../../../generated/prisma/browser";
+import { IRequestUser } from "../../interfaces/requestUser.interface";
 
 const getAllSuperAdmins = async () => {
   // 1. Fetch all super admins from the database (non-deleted)
@@ -86,7 +87,7 @@ const updateSuperAdmin = async (
   return updatedSuperAdmin;
 };
 
-const softDeleteSuperAdmin = async (id: string) => {
+const softDeleteSuperAdmin = async (id: string, user: IRequestUser) => {
   // 1. Check if the super admin exists and is not already deleted
   const superAdminExists = await prisma.superAdmin.findUnique({
     where: {
@@ -97,6 +98,12 @@ const softDeleteSuperAdmin = async (id: string) => {
 
   if (!superAdminExists) {
     throw new AppError(status.NOT_FOUND, "Super Admin not found");
+  }
+  if (superAdminExists.userId === user.userId) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "You cannot delete your own account",
+    );
   }
 
   // 2. Soft delete the super admin by setting isDeleted to true

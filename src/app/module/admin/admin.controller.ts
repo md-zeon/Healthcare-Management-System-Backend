@@ -43,8 +43,9 @@ const updateAdmin = catchAsync(async (req: Request, res: Response) => {
 
 const softDeleteAdmin = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
+  const user = req.user;
 
-  await AdminService.softDeleteAdmin(id as string);
+  await AdminService.softDeleteAdmin(id as string, user);
 
   sendResponse(res, {
     httpStatusCode: status.OK,

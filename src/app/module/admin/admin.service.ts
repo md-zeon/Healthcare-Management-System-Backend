@@ -3,6 +3,7 @@ import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
 import { IUpdateAdminPayload } from "./admin.interface";
 import { UserStatus } from "../../../generated/prisma/enums";
+import { IRequestUser } from "../../interfaces/requestUser.interface";
 
 const getAllAdmins = async () => {
   // 1. Fetch all admins from the database (non-deleted)
@@ -83,7 +84,7 @@ const updateAdmin = async (id: string, payload: IUpdateAdminPayload) => {
   return updatedAdmin;
 };
 
-const softDeleteAdmin = async (id: string) => {
+const softDeleteAdmin = async (id: string, user: IRequestUser) => {
   // 1. Check if the admin exists and is not already deleted
   const adminExists = await prisma.admin.findUnique({
     where: {
@@ -94,6 +95,13 @@ const softDeleteAdmin = async (id: string) => {
 
   if (!adminExists) {
     throw new AppError(status.NOT_FOUND, "Admin not found");
+  }
+
+  if (adminExists.userId === user.userId) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "You cannot delete your own account",
+    );
   }
 
   // 2. Soft delete the admin by setting isDeleted to true
