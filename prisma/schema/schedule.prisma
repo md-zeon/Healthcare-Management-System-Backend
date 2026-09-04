@@ -9,3 +9,21 @@ model Schedule {
 
     @@map("schedules")
 }
+
+model DoctorSchedules {
+    id         String   @id @default(uuid(7))
+    doctorId   String
+    scheduleId String
+    isBooked   Boolean  @default(false)
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    doctor   Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+    schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+    // An appointment is associated with this specific doctor's schedule slot
+    appointment Appointment?
+
+    @@unique([doctorId, scheduleId])
+    @@map("doctor_schedules")
+}
