@@ -76,13 +76,11 @@ const getDoctorById = async (id: string) => {
 };
 
 const updateDoctor = async (id: string, payload: IUpdateDoctorPayload) => {
-  // 1. Extract data from payload
-  const { specialties, doctor: doctorData } = payload;
-
-  // 2. check if the doctor exists
+  // 1. check if the doctor exists and is not deleted
   const doctorExists = await prisma.doctor.findUnique({
     where: {
       id,
+      isDeleted: false,
     },
   });
 
@@ -90,7 +88,12 @@ const updateDoctor = async (id: string, payload: IUpdateDoctorPayload) => {
     throw new AppError(status.NOT_FOUND, "Doctor not found");
   }
 
+  // 2. Separate the specialties from the rest of the doctor data
+  const { specialties, ...doctorData } = payload;
+
+  // 3. Use a transaction to update the doctor and handle specialties
   await prisma.$transaction(async (tx) => {
+    // Update the doctor data if provided
     if (doctorData) {
       await tx.doctor.update({
         where: {
@@ -102,10 +105,12 @@ const updateDoctor = async (id: string, payload: IUpdateDoctorPayload) => {
       });
     }
 
+    // Handle specialties if provided
     if (specialties && specialties.length > 0) {
       for (const specialty of specialties) {
         const { specialtyId, shouldDelete } = specialty;
 
+        // If shouldDelete is true, delete the specialty association; otherwise, upsert it
         if (shouldDelete) {
           await tx.doctorSpecialty.delete({
             where: {
@@ -116,6 +121,7 @@ const updateDoctor = async (id: string, payload: IUpdateDoctorPayload) => {
             },
           });
         } else {
+          // Upsert the specialty association
           await tx.doctorSpecialty.upsert({
             where: {
               doctorId_specialtyId: {
@@ -133,6 +139,8 @@ const updateDoctor = async (id: string, payload: IUpdateDoctorPayload) => {
       }
     }
   });
+
+  // 4. Return the updated doctor
   const doctor = await getDoctorById(id);
 
   return doctor;
