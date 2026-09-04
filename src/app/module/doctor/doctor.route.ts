@@ -27,7 +27,11 @@ router.patch(
 // 💡 Note: DOCTOR can update their own profile
 // In production, you should add logic to ensure doctors can only update their own profile
 
-// TODO: Implement the following routes
-// router.delete("/:id", DoctorController.deleteDoctor);
+// Delete doctor by ID
+router.delete(
+  "/:id",
+  checkAuth("ADMIN", "SUPER_ADMIN"),
+  DoctorController.softDeleteDoctor,
+);
 
 export const DoctorRoutes = router;
