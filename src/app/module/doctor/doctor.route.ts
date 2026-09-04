@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { DoctorController } from "./doctor.controller";
 import checkAuth from "../../middleware/checkAuth";
+import validateRequest from "../../middleware/validateRequest";
+import { DoctorValidation } from "./doctor.validation";
 
 const router: Router = Router();
 
@@ -22,6 +24,7 @@ router.get(
 router.patch(
   "/:id",
   checkAuth("ADMIN", "SUPER_ADMIN", "DOCTOR"),
+  validateRequest(DoctorValidation.updateDoctorValidationSchema),
   DoctorController.updateDoctor,
 );
 // 💡 Note: DOCTOR can update their own profile

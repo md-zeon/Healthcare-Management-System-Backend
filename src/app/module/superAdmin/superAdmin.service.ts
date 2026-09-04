@@ -20,6 +20,19 @@ const getAllSuperAdmins = async () => {
       contactNumber: true,
       createdAt: true,
       updatedAt: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          status: true,
+          emailVerified: true,
+          image: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
     },
   });
 
@@ -30,6 +43,9 @@ const getAllSuperAdmins = async () => {
 const getSuperAdminById = async (id: string) => {
   const superAdmin = await prisma.superAdmin.findUnique({
     where: { id, isDeleted: false },
+    include: {
+      user: true,
+    },
   });
 
   if (!superAdmin) {

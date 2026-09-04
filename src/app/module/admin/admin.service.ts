@@ -20,6 +20,19 @@ const getAllAdmins = async () => {
       contactNumber: true,
       createdAt: true,
       updatedAt: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          status: true,
+          emailVerified: true,
+          image: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
     },
   });
 
@@ -30,6 +43,9 @@ const getAllAdmins = async () => {
 const getAdminById = async (id: string) => {
   const admin = await prisma.admin.findUnique({
     where: { id, isDeleted: false },
+    include: {
+      user: true,
+    },
   });
 
   if (!admin) {
