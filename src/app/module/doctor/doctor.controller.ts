@@ -16,10 +16,23 @@ const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
 });
 
 // TODO: Implement the following controller functions
-// const getDoctorById = catchAsync(async (req: Request, res: Response) => {});
+const getDoctorById = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const doctor = await DoctorService.getDoctorById(id as string);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Doctor retrieved successfully",
+    data: doctor,
+  });
+});
 // const updateDoctor = catchAsync(async (req: Request, res: Response) => {});
 // const deleteDoctor = catchAsync(async (req: Request, res: Response) => {});
 
 export const DoctorController = {
   getAllDoctors,
+  getDoctorById,
+  // updateDoctor,
+  // deleteDoctor
 };
