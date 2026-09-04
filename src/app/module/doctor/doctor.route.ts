@@ -7,7 +7,7 @@ const router: Router = Router();
 // Get all doctors - accessible by Admin, Super Admin, and Doctor
 router.get(
   "/",
-  //   checkAuth("ADMIN", "SUPER_ADMIN", "DOCTOR"),
+  checkAuth("ADMIN", "SUPER_ADMIN", "DOCTOR"),
   DoctorController.getAllDoctors,
 );
 
