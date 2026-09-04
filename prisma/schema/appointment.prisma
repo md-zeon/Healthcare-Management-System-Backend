@@ -1,0 +1,22 @@
+model Appointment {
+    id               String            @id @default(uuid(7))
+    patientId        String
+    doctorId         String
+    doctorScheduleId String            @unique
+    videoCallingId   String
+    status           AppointmentStatus @default(SCHEDULED)
+    paymentStatus    PaymentStatus     @default(UNPAID)
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+
+    // Relations
+    patient        Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+    doctor         Doctor          @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+    doctorSchedule DoctorSchedules @relation(fields: [doctorScheduleId], references: [id], onDelete: Cascade)
+
+    // One appointment can have one review and one medical report
+    review        Review?
+    medicalReport MedicalReport?
+
+    @@map("appointments")
+}
