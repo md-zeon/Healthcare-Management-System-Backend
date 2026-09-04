@@ -11,7 +11,6 @@ model MedicalReport {
 
     // Relations
     patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
-    doctor      Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
     appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
     @@map("medical_reports")

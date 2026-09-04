@@ -24,7 +24,7 @@ router.get(
 // Update admin by ID
 router.patch(
   "/:id",
-  checkAuth(Role.SUPER_ADMIN, Role.ADMIN),
+  checkAuth(Role.SUPER_ADMIN),
   validateRequest(AdminValidation.updateAdminZodSchema),
   AdminController.updateAdmin,
 );

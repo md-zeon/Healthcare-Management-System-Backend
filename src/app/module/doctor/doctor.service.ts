@@ -2,6 +2,7 @@ import status from "http-status";
 import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
 import { IUpdateDoctorPayload } from "./doctor.interface";
+import { UserStatus } from "../../../generated/prisma/enums";
 
 const getAllDoctors = async () => {
   // 1. Fetch all doctors from the database (non-deleted)
@@ -26,6 +27,7 @@ const getAllDoctors = async () => {
       currentWorkingPlace: true,
       designation: true,
       averageRating: true,
+      address: true,
       specialties: {
         select: {
           specialty: {
@@ -55,11 +57,25 @@ const getDoctorById = async (id: string) => {
   const result = await prisma.doctor.findUnique({
     where: { id, isDeleted: false },
     include: {
+      user: true,
       specialties: {
         include: {
           specialty: true,
         },
       },
+      appointments: {
+        include: {
+          patient: true,
+          schedule: true,
+          prescription: true,
+        },
+      },
+      doctorSchedules: {
+        include: {
+          schedule: true,
+        },
+      },
+      reviews: true,
     },
   });
 
@@ -159,19 +175,41 @@ const softDeleteDoctor = async (id: string) => {
     throw new AppError(status.NOT_FOUND, "Doctor not found");
   }
 
-  // 2. Soft delete the doctor by setting isDeleted to true
-  const result = await prisma.doctor.update({
-    where: {
-      id,
-    },
-    data: {
-      isDeleted: true,
-      deletedAt: new Date(),
-    },
-  });
+  await prisma.$transaction(async (tx) => {
+    // 2. Soft delete the doctor by setting isDeleted to true
+    await tx.doctor.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    });
 
-  // 3. Return the soft-deleted doctor
-  return result;
+    // 3. Soft delete the associated user by setting isDeleted to true and updating the status
+    await tx.user.update({
+      where: { id: doctorExists.userId },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        status: UserStatus.DELETED,
+      },
+    });
+
+    // 4. Soft delete all sessions associated with the user
+    await tx.session.deleteMany({
+      where: {
+        userId: doctorExists.userId,
+      },
+    });
+
+    // 5. Soft delete all doctor specialties associated with the doctor
+    await tx.doctorSpecialty.deleteMany({
+      where: {
+        doctorId: id,
+      },
+    });
+  });
+  return { message: "Doctor deleted successfully" };
 };
 
 export const DoctorService = {

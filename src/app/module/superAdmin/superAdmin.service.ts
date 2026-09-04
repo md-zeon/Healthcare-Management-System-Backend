@@ -2,6 +2,7 @@ import status from "http-status";
 import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
 import { IUpdateSuperAdminPayload } from "./superAdmin.interface";
+import { UserStatus } from "../../../generated/prisma/browser";
 
 const getAllSuperAdmins = async () => {
   // 1. Fetch all super admins from the database (non-deleted)
@@ -99,18 +100,36 @@ const softDeleteSuperAdmin = async (id: string) => {
   }
 
   // 2. Soft delete the super admin by setting isDeleted to true
-  const deletedSuperAdmin = await prisma.superAdmin.update({
-    where: {
-      id,
-    },
-    data: {
-      isDeleted: true,
-      deletedAt: new Date(),
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.superAdmin.update({
+      where: {
+        id,
+      },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    });
+
+    // 3. Soft delete the associated user by setting isDeleted to true and updating the status
+    await tx.user.update({
+      where: { id: superAdminExists.userId },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        status: UserStatus.DELETED,
+      },
+    });
+    // 4. delete all sessions associated with the user
+    await tx.session.deleteMany({
+      where: {
+        userId: superAdminExists.userId,
+      },
+    });
   });
 
   // 3. Return the soft-deleted super admin
-  return deletedSuperAdmin;
+  return { message: "Super Admin deleted successfully" };
 };
 
 export const SuperAdminService = {

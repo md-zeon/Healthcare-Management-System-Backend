@@ -17,6 +17,7 @@ model Patient {
 
     patientHealthData PatientHealthData?
     appointments      Appointment[]
+    prescriptions     Prescription[]
     reviews           Review[]
     medicalReports    MedicalReport[]
 

@@ -2,6 +2,7 @@ import status from "http-status";
 import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
 import { IUpdateAdminPayload } from "./admin.interface";
+import { UserStatus } from "../../../generated/prisma/enums";
 
 const getAllAdmins = async () => {
   // 1. Fetch all admins from the database (non-deleted)
@@ -96,18 +97,35 @@ const softDeleteAdmin = async (id: string) => {
   }
 
   // 2. Soft delete the admin by setting isDeleted to true
-  const deletedAdmin = await prisma.admin.update({
-    where: {
-      id,
-    },
-    data: {
-      isDeleted: true,
-      deletedAt: new Date(),
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.admin.update({
+      where: {
+        id,
+      },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    });
+
+    // 3. Soft delete the associated user by setting isDeleted to true and updating the status
+    await tx.user.update({
+      where: { id: adminExists.userId },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        status: UserStatus.DELETED,
+      },
+    });
+    // 4. delete all sessions associated with the user
+    await tx.session.deleteMany({
+      where: {
+        userId: adminExists.userId,
+      },
+    });
   });
 
-  // 3. Return the soft-deleted admin
-  return deletedAdmin;
+  return { message: "Admin deleted successfully" };
 };
 
 export const AdminService = {

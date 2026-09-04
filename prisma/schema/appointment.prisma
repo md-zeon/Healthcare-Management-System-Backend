@@ -14,9 +14,11 @@ model Appointment {
     doctor         Doctor          @relation(fields: [doctorId], references: [id], onDelete: Cascade)
     doctorSchedule DoctorSchedules @relation(fields: [doctorScheduleId], references: [id], onDelete: Cascade)
 
-    // One appointment can have one review and one medical report
+    // One appointment can have one prescription, one review, one payment, and one medical report
+    prescription  Prescription?
     review        Review?
     medicalReport MedicalReport?
+    payment       Payment?
 
     @@map("appointments")
 }
