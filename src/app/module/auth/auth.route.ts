@@ -7,6 +7,11 @@ const router: Router = Router();
 
 router.post("/register", AuthController.registerPatient);
 router.post("/login", AuthController.loginUser);
+router.post(
+  "/change-password",
+  checkAuth(Role.PATIENT, Role.DOCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+  AuthController.changePassword,
+);
 router.get(
   "/me",
   checkAuth(Role.PATIENT, Role.DOCTOR, Role.ADMIN, Role.SUPER_ADMIN),
