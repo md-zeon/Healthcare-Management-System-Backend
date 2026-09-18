@@ -4,6 +4,7 @@ import { AuthService } from "./auth.service";
 import sendResponse from "../../shared/sendResponse";
 import status from "http-status";
 import { tokenUtils } from "../../utils/token";
+import AppError from "../../errorHelpers/AppError";
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
@@ -54,8 +55,40 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getNewToken = catchAsync(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    throw new AppError(status.UNAUTHORIZED, "Refresh token not found");
+  }
+
+  const sessionToken = req.cookies["better-auth.session_token"];
+  if (!sessionToken) {
+    throw new AppError(status.UNAUTHORIZED, "Session token not found");
+  }
+
+  const result = await AuthService.getNewToken(refreshToken, sessionToken);
+
+  const {
+    accessToken,
+    refreshToken: newRefreshToken,
+    sessionToken: newSessionToken,
+  } = result;
+
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, newRefreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, newSessionToken);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "New tokens generated successfully",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerPatient,
   loginUser,
   getMe,
+  getNewToken,
 };
