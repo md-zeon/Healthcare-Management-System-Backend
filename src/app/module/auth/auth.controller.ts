@@ -5,6 +5,7 @@ import sendResponse from "../../shared/sendResponse";
 import status from "http-status";
 import { tokenUtils } from "../../utils/token";
 import AppError from "../../errorHelpers/AppError";
+import { cookieUtils } from "../../utils/cookie";
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
@@ -113,10 +114,44 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const logoutUser = catchAsync(async (req: Request, res: Response) => {
+  const sessionToken = req.cookies["better-auth.session_token"];
+
+  if (!sessionToken) {
+    throw new AppError(status.UNAUTHORIZED, "Session token not found");
+  }
+
+  const result = await AuthService.logoutUser(sessionToken);
+
+  cookieUtils.clearCookie(res, "accessToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+  cookieUtils.clearCookie(res, "refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+  cookieUtils.clearCookie(res, "better-auth.session_token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "User logged out successfully",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerPatient,
   loginUser,
   getMe,
   getNewToken,
   changePassword,
+  logoutUser,
 };
