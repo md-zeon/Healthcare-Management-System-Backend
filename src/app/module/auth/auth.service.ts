@@ -307,6 +307,42 @@ const verifyEmail = async (email: string, otp: string) => {
   }
 };
 
+const forgotPassword = async (email: string) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!isUserExists) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  if (!isUserExists.emailVerified) {
+    throw new AppError(status.BAD_REQUEST, "Email not verified");
+  }
+
+  if (isUserExists.status === UserStatus.BLOCKED) {
+    throw new AppError(
+      status.FORBIDDEN,
+      "Your account has been blocked. Please contact support.",
+    );
+  }
+
+  if (isUserExists.isDeleted || isUserExists.status === UserStatus.DELETED) {
+    throw new AppError(
+      status.GONE,
+      "Your account has been deleted. Please contact support.",
+    );
+  }
+
+  await auth.api.requestPasswordResetEmailOTP({
+    body: {
+      email,
+    },
+  });
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
@@ -315,4 +351,5 @@ export const AuthService = {
   changePassword,
   logoutUser,
   verifyEmail,
+  forgotPassword,
 };
