@@ -21,6 +21,7 @@ router.post(
 
 router.post("/verify-email", AuthController.verifyEmail);
 router.post("/forgot-password", AuthController.forgotPassword);
+router.post("/reset-password", AuthController.resetPassword);
 
 router.get(
   "/me",
