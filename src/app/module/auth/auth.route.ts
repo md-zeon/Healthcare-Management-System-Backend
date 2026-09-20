@@ -18,6 +18,9 @@ router.post(
   checkAuth(Role.PATIENT, Role.DOCTOR, Role.ADMIN, Role.SUPER_ADMIN),
   AuthController.logoutUser,
 );
+
+router.post("/verify-email", AuthController.verifyEmail);
+
 router.get(
   "/me",
   checkAuth(Role.PATIENT, Role.DOCTOR, Role.ADMIN, Role.SUPER_ADMIN),

@@ -4,7 +4,8 @@ import { prisma } from "./prisma";
 import { Role, UserStatus } from "../../generated/prisma/enums";
 import envVars from "../../config/env";
 import getAge from "../utils/getAge";
-import { bearer } from "better-auth/plugins";
+import { bearer, emailOTP } from "better-auth/plugins";
+import { sendEmail } from "../utils/email";
 // If your Prisma file is located elsewhere, you can change the path
 
 export const auth = betterAuth({
@@ -14,6 +15,12 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendOnSignup: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
   },
   user: {
     additionalFields: {
@@ -44,7 +51,33 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [bearer()],
+  plugins: [
+    bearer(),
+    emailOTP({
+      overrideDefaultEmailVerification: true,
+      async sendVerificationOTP({ email, otp, type }) {
+        if (type === "email-verification") {
+          const user = await prisma.user.findUnique({
+            where: { email },
+          });
+
+          if (user && !user.emailVerified) {
+            sendEmail({
+              to: email,
+              subject: "Verify your email address",
+              templateName: "otp",
+              templateData: {
+                name: user.name,
+                otp,
+              },
+            });
+          }
+        }
+      },
+      expiresIn: 2 * 60, // 2 minutes in seconds
+      otpLength: 6, // 6 digits
+    }),
+  ],
   session: {
     expiresIn: getAge(
       envVars.BETTER_AUTH_SESSION_TOKEN_EXPIRES_IN,
